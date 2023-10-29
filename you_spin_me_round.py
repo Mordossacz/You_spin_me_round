@@ -184,5 +184,5 @@ def spin_me_round(size=(100, 100, 100), figure='cube', color=(0, 160, 160),
         pygame.display.flip()
         surface.fill((0,0,0))
         clock.tick(tick_time)
-
+# ala ma kota
 spin_me_round(size=(100, 200, 100),figure='pyramid', pre_angle=(30, 0, 10), angle=(0, 0.3, 0))
