@@ -99,6 +99,7 @@ def spin_me_round(size=(100, 100, 100), figure='cube', color=(0, 160, 160),
     surface = pygame.display.set_mode((xx, yy), pygame.NOFRAME)
     clock = pygame.time.Clock()
     tick_time = 100
+    speed = 0.001
 
     cube = Figure(color)
     if figure == 'cube':
@@ -138,17 +139,17 @@ def spin_me_round(size=(100, 100, 100), figure='cube', color=(0, 160, 160),
                         move = (0, 0, -10)
                     cube.submit(cube.move(move))
                 elif event.key == pygame.K_UP:
-                    angle = np.add(angle, (0.01, 0, 0))
+                    angle = np.add(angle, (speed, 0, 0))
                 elif event.key == pygame.K_DOWN:
-                    angle = np.add(angle, (-0.01, 0, 0))
+                    angle = np.add(angle, (-1*speed, 0, 0))
                 elif event.key == pygame.K_RIGHT:
-                    angle = np.add(angle, (0, 0.01, 0))
+                    angle = np.add(angle, (0, speed, 0))
                 elif event.key == pygame.K_LEFT:
-                    angle = np.add(angle, (0, -0.01, 0))
+                    angle = np.add(angle, (0, -1*speed, 0))
                 elif event.key == pygame.K_0:
-                    angle = np.add(angle, (0, 0, 0.01))
+                    angle = np.add(angle, (0, 0, speed))
                 elif event.key == pygame.K_9:
-                    angle = np.add(angle, (0, 0, -0.01))
+                    angle = np.add(angle, (0, 0, -1*speed))
 
         cube.submit(cube.rotate(angle))
         surface_sorted = sorted(cube.surfaces,
@@ -185,4 +186,4 @@ def spin_me_round(size=(100, 100, 100), figure='cube', color=(0, 160, 160),
         surface.fill((0,0,0))
         clock.tick(tick_time)
 
-spin_me_round(size=(100, 200, 100),figure='pyramid', pre_angle=(30, 0, 10), angle=(0, 0.3, 0))
+spin_me_round(size=(100, 100, 100),figure='sandglass', pre_angle=(0, 0, 0), angle=(0, 0.3, 0))
