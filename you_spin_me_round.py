@@ -64,10 +64,16 @@ class Figure:
                          (7, 5, 4, 6))
 
     def center_point(self, surface):
-        x = sum(i[0] for i in surface) / len(surface)
-        y = sum(i[1] for i in surface) / len(surface)
-        z = sum(i[2] for i in surface) / len(surface)
-        return x, y, z
+        x, y, z, ll = 0, 0, 0, len(surface)
+        for i in surface:
+            x, y, z = np.add((x, y, z), i)
+        return x/ll, y/ll, z/ll
+
+    def center_point_self(self):
+        x, y, z, ll = 0, 0, 0, len(self.points)
+        for p in self.points:
+            x, y, z = np.add((x, y, z), p)
+        return x/ll, y/ll, z/ll
 
     def submit(self, new_points):
         self.points = new_points.copy()
@@ -90,6 +96,8 @@ class Figure:
         for pos in self.points:
             moved_points.append(np.add(pos, vect))
         return moved_points
+
+
 
 def spin_me_round(size=(100, 100, 100), figure='cube', color=(0, 160, 160),
                   pre_move=(0, 0, 0), pre_angle=(0, 0, 0), angle=(0, 0, 0)):
@@ -153,10 +161,10 @@ def spin_me_round(size=(100, 100, 100), figure='cube', color=(0, 160, 160),
 
         cube.submit(cube.rotate(angle))
         surface_sorted = sorted(cube.surfaces,
-                        key=lambda x: cube.center_point([cube.points[i] for i in x])[2])
+                                key=lambda x: cube.center_point([cube.points[i] for i in x])[2])
         for surface_points in surface_sorted:
-            vect1 = [cube.points[surface_points[1]][i] - cube.points[surface_points[0]][i] for i in range(3)]
-            vect2 = [cube.points[surface_points[2]][i] - cube.points[surface_points[0]][i] for i in range(3)]
+            vect1 = np.subtract(cube.points[surface_points[1]], cube.points[surface_points[0]])
+            vect2 = np.subtract(cube.points[surface_points[2]], cube.points[surface_points[0]])
             perpendicular_vect = np.cross(vect1, vect2)  # it's perpandicular to surface_points
 
             dist_ratio = -1 * perpendicular_vect[0] / np.sqrt(perpendicular_vect[0]**2 +
@@ -186,4 +194,4 @@ def spin_me_round(size=(100, 100, 100), figure='cube', color=(0, 160, 160),
         surface.fill((0,0,0))
         clock.tick(tick_time)
 
-spin_me_round(size=(100, 100, 100),figure='sandglass', pre_angle=(0, 0, 0), angle=(0, 0.3, 0))
+#spin_me_round(size=(100, 100, 100),figure='sandglass', pre_angle=(0, 0, 0), angle=(0, 0.3, 0))
