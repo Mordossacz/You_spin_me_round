@@ -1,8 +1,14 @@
-# zarzucone na razie
-
 import pygame, sys, time
 import you_spin_me_round as spin
 import numpy as np
+
+def center_point_self(figures):
+    x, y, z, ll = 0, 0, 0, 0
+    for figure in figures:
+        for p in figure.points:
+            x, y, z = np.add((x, y, z), p)
+            ll += 1
+    return x / ll, y / ll, z / ll
 
 class Rubik_cube:
     def __init__(self):
@@ -74,36 +80,35 @@ class Rubik_cube:
                     a.submit(a.move(((i - 1) * size, (j - 1) * size, (k-1) * size)))
         del self.figures[1, 1, 1]
 
-    def center_point_self(self, figures):
-        x, y, z, ll = 0, 0, 0, 0
-        for figure in figures:
-            for p in figure.points:
-                x, y, z = np.add((x, y, z), p)
-                ll += 1
-        return x/ll, y/ll, z/ll
+    def rotate(self, angle):
+        all_surfaces = []
+        for lis in self.figures.values():
+            for fig in lis:
+                points = fig.rotate(angle)
+                for j in fig.surfaces:
+                    all_surfaces.append([points[x] for x in j[:-1]] + [j[-1]])
+        return all_surfaces
 
     def submit_rot(self, new):
         for i in new:
             self.figures[i] = new[i]
 
     def F(self, prim=False):
-        new_points = {}
+        new_figures = {}
         for key, value in self.figures.items():
             if key[2] == 2:
                 if key[0] == 0:
-                    new_points[(2-key[1], 0, key[2])] = value
+                    new_figures[(2-key[1], 0, key[2])] = value
                 if key[1] == 0:
-                    new_points[(2, key[0], key[2])] = value
+                    new_figures[(2, key[0], key[2])] = value
                 if key[0] == 2:
-                    new_points[(2-key[1], 2, key[2])] = value
+                    new_figures[(2-key[1], 2, key[2])] = value
                 if key[1] == 2:
-                    new_points[(0, key[0], key[2])] = value
+                    new_figures[(0, key[0], key[2])] = value
 
                 for fig in value:
-                    fig.submit(fig.rotate((self.angle_s[0]*-1, self.angle_s[1]*-1, self.angle_s[2]*-1)))
-                    fig.submit(fig.rotate((self.a1, 0, 0)))
-                    fig.submit(fig.rotate((self.angle_s[0], self.angle_s[1], self.angle_s[2])))
-        self.submit_rot(new_points)
+                    fig.submit(fig.rotate((self.a1/15, 0, 0)))
+        self.submit_rot(new_figures)
 
     def B(self):
         pass
@@ -117,6 +122,9 @@ def rubik_cube():
     clock = pygame.time.Clock()
     tick_time = 100
     speed = 0.01  # speed change on click
+
+    rotation_key = None
+    rotation_key_counter = 15
 
     rcube = Rubik_cube()
     rcube.generate(70, 55, 4)
@@ -143,45 +151,46 @@ def rubik_cube():
                 elif event.key == pygame.K_9:
                     angle = np.add(angle, (0, 0, -1*speed))
 
-                elif event.key == pygame.K_f:
-                    rcube.F()
+                if not rotation_key:
+                    if event.key == pygame.K_f:
+                        rotation_key = (rcube.F, False)
+                    elif event.key == pygame.K_b:
+                        rotation_key = (rcube.B, False)
 
-        # for coordinates in rcube.figures.items():
-        #     print(coordinates, '\n')
-        for coordinates in sorted(rcube.figures.values(), key= lambda x: rcube.center_point_self(x)[2]):
-            for cube in sorted(coordinates, key= lambda x: x.center_point_self()[2]):
-                # drawing 1 figure
-                cube.submit(cube.rotate(angle))
-                surface_sorted = sorted(cube.surfaces,
-                                        key=lambda x: cube.center_point([cube.points[i] for i in x])[2])
-                for surface_points in surface_sorted:
-                    vect1 = np.subtract(cube.points[surface_points[1]], cube.points[surface_points[0]])
-                    vect2 = np.subtract(cube.points[surface_points[2]], cube.points[surface_points[0]])
-                    perpendicular_vect = np.cross(vect1, vect2)  # it's perpandicular to surface_points
+        if rotation_key_counter <= 0:
+            rotation_key = None
+            rotation_key_counter = 15
+        elif rotation_key:
+            rotation_key[0](rotation_key[1])
+            rotation_key_counter -= 1
 
-                    dist_ratio = -1 * perpendicular_vect[0] / np.sqrt(perpendicular_vect[0]**2 +
-                                                                 perpendicular_vect[1]**2 +
-                                                                 perpendicular_vect[2]**2)
-                    color = (cube.col[0]*dist_ratio/3 + cube.col[0]*2/3,
-                             cube.col[1]*dist_ratio/3 + cube.col[1]*2/3,
-                             cube.col[2]*dist_ratio/3 + cube.col[2]*2/3)
 
-                    if perpendicular_vect[2] < 0: # checking if screen is facing towards us
-                        pos = [(cube.points[i][0:-1][0] + xx//2,
-                                cube.points[i][0:-1][1] + yy//2) for i in surface_points]
+        all_surfaces = rcube.rotate(rcube.angle_s)
+        surface_sorted = sorted(all_surfaces,
+                                key=lambda x: spin.center_point(x[:-1])[2])
+        for surface_points in surface_sorted:
+            vect1 = np.subtract(surface_points[1], surface_points[0])
+            vect2 = np.subtract(surface_points[2], surface_points[0])
+            perpendicular_vect = np.cross(vect1, vect2)  # it's perpandicular to surface_points
 
-                        pygame.draw.polygon(screen, color, pos)
-                        #pygame.draw.polygon(screen, (0, 0, 0), pos, width=3)  # with lines on edges
+            dist_ratio = -1 * perpendicular_vect[0] / np.sqrt(perpendicular_vect[0]**2 +
+                                                         perpendicular_vect[1]**2 +
+                                                         perpendicular_vect[2]**2)
+            color = (surface_points[-1][0] * dist_ratio / 3 + surface_points[-1][0] * 2 / 3,
+                     surface_points[-1][1] * dist_ratio / 3 + surface_points[-1][1] * 2 / 3,
+                     surface_points[-1][2] * dist_ratio / 3 + surface_points[-1][2] * 2 / 3)
 
-                # pygame.display.flip()
-                # print(x, cube.center_point_self())
-                # time.sleep(1)
+            if perpendicular_vect[2] < 0: # checking if screen is facing towards us
+                pos = [(i[0:-1][0] + xx//2,
+                        i[0:-1][1] + yy//2) for i in surface_points[:-1]]
+
+                pygame.draw.polygon(screen, color, pos)
+                #pygame.draw.polygon(screen, (0, 0, 0), pos, width=3)  # with lines on edges
 
         # drawing center
         #pygame.draw.circle(screen, (255, 255, 255), (xx/2, yy/2), 4)
 
         rcube.add_angle(angle)
-        print(rcube.angle_s)
         pygame.display.flip()
         screen.fill((40,40,40))
         clock.tick(tick_time)

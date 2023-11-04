@@ -5,6 +5,13 @@
 import pygame, sys
 import numpy as np
 
+
+def center_point(surface):
+    x, y, z, ll = 0, 0, 0, len(surface)
+    for i in surface:
+        x, y, z = np.add((x, y, z), i)
+    return x / ll, y / ll, z / ll
+
 class Figure:
     def __init__(self, col):
         self.points = list()
@@ -22,16 +29,16 @@ class Figure:
         self.points += [(-1 * x, -1 * y, z)]
         self.points += [(-1 * x, -1 * y, -1 * z)]
 
-        self.surfaces = ((0, 2, 3),
-                         (0, 1, 2),
-                         (0, 3, 4, 1),
-                         (4, 2, 1),
-                         (4, 3, 2),
-                         (5, 7, 2),
-                         (5, 2, 6),
-                         (5, 6, 8, 7),
-                         (8, 6, 2),
-                         (8, 2, 7))
+        self.surfaces = ((0, 2, 3, self.col),
+                         (0, 1, 2, self.col),
+                         (0, 3, 4, 1, self.col),
+                         (4, 2, 1, self.col),
+                         (4, 3, 2, self.col),
+                         (5, 7, 2, self.col),
+                         (5, 2, 6, self.col),
+                         (5, 6, 8, 7, self.col),
+                         (8, 6, 2, self.col),
+                         (8, 2, 7, self.col))
 
     def pyramid(self, x, y, z):
         self.points += [(x, y, z)]
@@ -40,11 +47,11 @@ class Figure:
         self.points += [(x * -1, y, z)]
         self.points += [(x * -1, y, z * -1)]
 
-        self.surfaces = ((0, 2, 3),
-                         (0, 1, 2),
-                         (0, 3, 4, 1),
-                         (4, 2, 1),
-                         (4, 3, 2))
+        self.surfaces = ((0, 2, 3, self.col),
+                         (0, 1, 2, self.col),
+                         (0, 3, 4, 1, self.col),
+                         (4, 2, 1, self.col),
+                         (4, 3, 2, self.col))
 
     def cube(self, x, y, z):
         self.points +=[(x, y, z)]
@@ -56,24 +63,18 @@ class Figure:
         self.points +=[(x * -1, y * -1, z)]
         self.points +=[(x * -1, y * -1, z * -1)]
 
-        self.surfaces = ((0, 2, 6, 4),
-                         (0, 1, 3, 2),
-                         (0, 4, 5, 1),
-                         (7, 6, 2, 3),
-                         (7, 3, 1, 5),
-                         (7, 5, 4, 6))
+        self.surfaces = ((0, 2, 6, 4, self.col),
+                         (0, 1, 3, 2, self.col),
+                         (0, 4, 5, 1, self.col),
+                         (7, 6, 2, 3, self.col),
+                         (7, 3, 1, 5, self.col),
+                         (7, 5, 4, 6, self.col))
 
-    def center_point(self, surface):
-        x, y, z, ll = 0, 0, 0, len(surface)
-        for i in surface:
-            x, y, z = np.add((x, y, z), i)
-        return x/ll, y/ll, z/ll
-
-    def center_point_self(self):
-        x, y, z, ll = 0, 0, 0, len(self.points)
-        for p in self.points:
-            x, y, z = np.add((x, y, z), p)
-        return x/ll, y/ll, z/ll
+    # def center_point_self(self):
+    #     x, y, z, ll = 0, 0, 0, len(self.points)
+    #     for p in self.points:
+    #         x, y, z = np.add((x, y, z), p)
+    #     return x/ll, y/ll, z/ll
 
     def submit(self, new_points):
         self.points = new_points.copy()
@@ -161,7 +162,7 @@ def spin_me_round(size=(100, 100, 100), figure='cube', color=(0, 160, 160),
 
         cube.submit(cube.rotate(angle))
         surface_sorted = sorted(cube.surfaces,
-                                key=lambda x: cube.center_point([cube.points[i] for i in x])[2])
+                                key=lambda x: center_point([cube.points[i] for i in x[:-1]])[2])
         for surface_points in surface_sorted:
             vect1 = np.subtract(cube.points[surface_points[1]], cube.points[surface_points[0]])
             vect2 = np.subtract(cube.points[surface_points[2]], cube.points[surface_points[0]])
@@ -170,13 +171,13 @@ def spin_me_round(size=(100, 100, 100), figure='cube', color=(0, 160, 160),
             dist_ratio = -1 * perpendicular_vect[0] / np.sqrt(perpendicular_vect[0]**2 +
                                                          perpendicular_vect[1]**2 +
                                                          perpendicular_vect[2]**2)
-            color = (cube.col[0]*dist_ratio/3 + cube.col[0]*2/3,
-                     cube.col[1]*dist_ratio/3 + cube.col[1]*2/3,
-                     cube.col[2]*dist_ratio/3 + cube.col[2]*2/3)
+            color = (surface_points[-1][0]*dist_ratio/3 + surface_points[-1][0]*2/3,
+                     surface_points[-1][1]*dist_ratio/3 + surface_points[-1][1]*2/3,
+                     surface_points[-1][2]*dist_ratio/3 + surface_points[-1][2]*2/3)
 
             if perpendicular_vect[2] < 0: # checking if surface is facing towards us
                 pos = [(cube.points[i][0:-1][0] + xx//2,
-                        cube.points[i][0:-1][1] + yy//2) for i in surface_points]
+                        cube.points[i][0:-1][1] + yy//2) for i in surface_points[:-1]]
 
                 pygame.draw.polygon(surface, color, pos)
                 #pygame.draw.polygon(surface, (0, 0, 0), pos, width=3)  # with lines on edges
