@@ -70,11 +70,11 @@ class Figure:
                          (7, 3, 1, 5, self.col),
                          (7, 5, 4, 6, self.col))
 
-    # def center_point_self(self):
-    #     x, y, z, ll = 0, 0, 0, len(self.points)
-    #     for p in self.points:
-    #         x, y, z = np.add((x, y, z), p)
-    #     return x/ll, y/ll, z/ll
+    def center_point_self(self):
+        x, y, z, ll = 0, 0, 0, len(self.points)
+        for p in self.points:
+            x, y, z = np.add((x, y, z), p)
+        return x/ll, y/ll, z/ll
 
     def submit(self, new_points):
         self.points = new_points.copy()
