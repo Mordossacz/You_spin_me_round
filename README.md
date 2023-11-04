@@ -1,5 +1,4 @@
-# You_spin_me_round
-rubik_cube.py
+# Rubik_cube
 required librares: numpy, pygame
 
 1) spin cube with arrows and "9", "0" keys
